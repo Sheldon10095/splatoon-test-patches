@@ -7,7 +7,7 @@ namespace Splatoon
         auto gambit_rpx = FindRPL(*gRPLInfo, "Gambit.rpx");
         if (!gambit_rpx)
         {
-            WHBLogPrintf("rce_patches: Couldn't find Gambit.rpx ...");
+            WHBLogPrintf("splatoon_test_patches: Couldn't find Gambit.rpx ...");
             return;
         }
     }
