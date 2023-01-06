@@ -1,0 +1,2 @@
+# splatoon-test-patches
+(DOES NOT INCLUDE RCE PATCHES!! PLEASE APPLY THEM SEPARATELY!!)
