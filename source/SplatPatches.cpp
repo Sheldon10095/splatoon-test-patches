@@ -5,13 +5,21 @@ namespace Splatoon
 {
     void MyTestFunc()
     {
-        static int i = 60;
-        if (i > 0) {
-            i--;
-        } else {
-            WHBLogPrintf("splatoon_test_patches: MyTestFunc() called! Heartbeat Message. (Expected every 60 frames)");
+        // asm volatile("nop");
+
+        static bool first = true;
+        if (first) {
+            WHBLogPrintf("splatoon_test_patches: MyTestFunc() called! First time.");
+            first = false;
         }
-        i = 60;
+
+        // static int i = 60;
+        // if (i > 0) {
+        //     i--;
+        // } else {
+        //     WHBLogPrintf("splatoon_test_patches: MyTestFunc() called! Heartbeat Message. (Expected every 60 frames)");
+        //     i = 60;
+        // }
     }
 
     void ApplyPatches()
@@ -44,6 +52,20 @@ namespace Splatoon
         // UTL::WriteCode(func + 0x148, UTL::inst::BranchLink())
 
         // Attempt to call test function
-        UTL::WriteCode(func + 0x144, UTL::inst::BranchLink(((uintptr_t)MyTestFunc) - (func + 0x144)));
+        // UTL::WriteCode(func + 0x144, UTL::inst::BranchLink(((uintptr_t)&MyTestFunc) - (func + 0x144 + 4)));
+        // auto MyTestFunc_addr = OSEffectiveToPhysical((uintptr_t)&MyTestFunc);
+        // UTL::WriteCode(func + 0x144, UTL::inst::BranchLink(MyTestFunc_addr - (func + 0x144)));
+        // WHBLogPrintf("SPT: [DEBUG] MyTestFunc() address: %p", &MyTestFunc);
+        // WHBLogPrintf("SPT: [DEBUG] MyTestFunc() Physical Address: %p", OSEffectiveToPhysical((uint32_t)&MyTestFunc));
+        // WHBLogPrintf("SPT: [DEBUG] func + 0x144: %p", func + 0x144);
+        // WHBLogPrintf("SPT: [DEBUG] func + 0x144 physical: %p", OSEffectiveToPhysical(func + 0x144));
+        // WHBLogPrintf("SPT: [DEBUG] MyTestFunc_addr - (func + 0x144): %p", MyTestFunc_addr - (func + 0x144));
+        // WHBLogPrintf("SPT: [DEBUG] %08x", ((uintptr_t)&MyTestFunc) - (func + 0x144));
+        // WHBLogPrintf("SPT: [DEBUG] ^ as PPC Hex Inst: %08x", UTL::inst::BranchLink(((uintptr_t)&MyTestFunc) - (func + 0x144)));
+
+        UTL::WriteCode(func + 0x144, 0x3d600000 | ((((uintptr_t)&MyTestFunc) >> 16) & 0x0000FFFF));
+        UTL::WriteCode(func + 0x148, 0x616b0000 | (((uintptr_t)&MyTestFunc) & 0x0000ffff));
+        UTL::WriteCode(func + 0x14c, 0x7d6903a6);
+        UTL::WriteCode(func + 0x150, 0x4e800420);
     }
 }
