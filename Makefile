@@ -21,7 +21,7 @@ WUMS_ROOT := $(DEVKITPRO)/wums
 #-------------------------------------------------------------------------------
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	source source/patcher
+SOURCES		:=	source source/patcher source/lib/utils
 DATA		:=	data
 INCLUDES	:=	source
 

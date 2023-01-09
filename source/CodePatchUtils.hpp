@@ -13,6 +13,15 @@ namespace UTL
     namespace inst
     {
         static constinit Instruction Nop = 0x60000000;
+        /*consteval*/ Instruction Branch(ptrdiff_t offset) {
+            u8 opcode = 18;
+            // u32 offset = offset & 0x03FFFFFC; // 26 bits. Ignore the last 2 bits in order to align to 4 bytes.
+            offset &= 0x03FFFFFC;
+            return (opcode << 26) | offset;
+        }
+        /*consteval*/ Instruction BranchLink(ptrdiff_t offset) {
+            return Branch(offset) | 1;
+        }
     }
 
     template<typename T>

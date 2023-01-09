@@ -3,6 +3,17 @@
 
 namespace Splatoon
 {
+    void MyTestFunc()
+    {
+        static int i = 60;
+        if (i > 0) {
+            i--;
+        } else {
+            WHBLogPrintf("splatoon_test_patches: MyTestFunc() called! Heartbeat Message. (Expected every 60 frames)");
+        }
+        i = 60;
+    }
+
     void ApplyPatches()
     {
         auto gambit_rpx = FindRPL(*gRPLInfo, "Gambit.rpx");
@@ -29,6 +40,10 @@ namespace Splatoon
 
         uintptr_t base = gambit_rpx->textAddr;
         uintptr_t func = base + 0xAD7160; /* gsys::SystemTask::invokeDrawTV_ */
-        UTL::WriteCode(func + 0x144, UTL::inst::Nop);
+        // UTL::WriteCode(func + 0x144, UTL::inst::Nop); // .text:02AD72A4         nop
+        // UTL::WriteCode(func + 0x148, UTL::inst::BranchLink())
+
+        // Attempt to call test function
+        UTL::WriteCode(func + 0x144, UTL::inst::BranchLink(((uintptr_t)MyTestFunc) - (func + 0x144)));
     }
 }
