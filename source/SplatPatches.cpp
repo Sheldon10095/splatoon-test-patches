@@ -1,12 +1,54 @@
 #include "SplatPatches.hpp"
 #include "CodePatchUtils.hpp"
 
+
+namespace sead
+{
+    struct Color4f
+    {
+        float r;
+        float g;
+        float b;
+        float a;
+    };
+
+    template <typename T>
+    struct Vector3
+    {
+        T x;
+        T y;
+        T z;
+    };
+
+    template <typename T>
+    struct BoundBox3
+    {
+        Vector3<T> min;
+        Vector3<T> max;
+    };
+}
+
+
 namespace Splatoon
 {
+    void (*drawBoundBoxImm)(sead::BoundBox3<float> const& box, sead::Color4f const & color, float a3);
+
+    static sead::BoundBox3<float> box1 = {
+        { -0.94f, -0.94f, 0.0f },
+        { 0.94f, 0.94f, 0.0f }
+    };
+
+    static sead::BoundBox3<float> box2 = {
+        { -0.97f, -0.97f, 0.0f },
+        { 0.97f, 0.97f, 0.0f }
+    };
+
+    static sead::Color4f color1 = { 1.0f, 1.0f, 1.0f, 1.0f };
+    static sead::Color4f color2 = { 1.0f, 0.0f, 0.0f, 1.0f };
+
+
     void MyTestFunc()
     {
-        // asm volatile("nop");
-
         static bool first = true;
         if (first) {
             WHBLogPrintf("splatoon_test_patches: MyTestFunc() called! First time.");
@@ -20,6 +62,9 @@ namespace Splatoon
         //     WHBLogPrintf("splatoon_test_patches: MyTestFunc() called! Heartbeat Message. (Expected every 60 frames)");
         //     i = 60;
         // }
+
+        // drawBoundBoxImm(box1, color1, 1.0f);
+        // drawBoundBoxImm(box2, color2, 1.0f);
     }
 
     void ApplyPatches()
@@ -67,5 +112,10 @@ namespace Splatoon
         UTL::WriteCode(func + 0x148, 0x616b0000 | (((uintptr_t)&MyTestFunc) & 0x0000ffff));
         UTL::WriteCode(func + 0x14c, 0x7d6903a6);
         UTL::WriteCode(func + 0x150, 0x4e800420);
+
+        // Jump forward a bit to skip the built in debug draw code. (Jump to func + 0x1AC)
+        UTL::WriteCode(func + 0x154, UTL::inst::Branch(0x1AC - 0x154)); // b 0x88
+
+        drawBoundBoxImm = (void (*)(sead::BoundBox3<float> const &box, sead::Color4f const &color, float a3))(base + 0xA11158);
     }
 }
