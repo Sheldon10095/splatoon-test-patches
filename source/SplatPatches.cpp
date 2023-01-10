@@ -1,7 +1,6 @@
 #include "SplatPatches.hpp"
 #include "CodePatchUtils.hpp"
 
-
 namespace sead
 {
     struct Color4f
@@ -38,6 +37,11 @@ namespace sead
     {
         T m[4][4];
     };
+
+    struct TextWriter
+    {
+        u8 _0[80];
+    };
 }
 
 
@@ -45,6 +49,10 @@ namespace Splatoon
 {
     void (*drawBoundBoxImm)(sead::BoundBox3<float> const& box, sead::Color4f const & color, float a3);
     void (*beginDrawImm)(sead::Matrix34<float> const& mtx34, sead::Matrix44<float> const& mtx44, int a3); // agl::ShaderType a3); // Maybe???
+
+    sead::TextWriter *(*sead_TextWriter__ct)(sead::TextWriter *_this);
+    sead::TextWriter *(*sead_TextWriter__ct_test)(sead::TextWriter *_this, int a2);
+    void (*sead_TextWriter_printf)(sead::TextWriter *_this, const char *fmt, ...);
 
     static sead::BoundBox3<float> box1 = {
         { -0.94f, -0.94f, 0.0f },
@@ -90,9 +98,54 @@ namespace Splatoon
         // }
 
         beginDrawImm(mtx34Ident, mtx44Ident, 4);
-        
+
         drawBoundBoxImm(box1, color1, 1.0f);
         drawBoundBoxImm(box2, color2, 1.0f);
+
+        // static sead::TextWriter *writer = nullptr;
+        // if (!writer) {
+        //     // writer = (sead::TextWriter*)malloc(sizeof(sead::TextWriter));
+        //     // writer = (sead::TextWriter*)malloc(80);
+        //     writer = sead_TextWriter__ct(writer);
+        //     WHBLogPrintf("splatoon_test_patches:    Created TextWriter.");
+        // }
+
+        // if (writer) {
+        //     WHBLogPrintf("splatoon_test_patches:    Writing to TextWriter...");
+        //     sead_TextWriter_printf(writer, "Hello World!");
+        // }
+
+        // auto writer = sead_TextWriter__ct_test(writer, 0x104141f4);
+        // if (writer) {
+        //     WHBLogPrintf("splatoon_test_patches:    Writing to TextWriter...");
+        //     sead_TextWriter_printf(writer, "Hello World!");
+        // } else {
+        //     WHBLogPrintf("splatoon_test_patches:    Failed to create TextWriter.");
+        // }
+
+        // static sead::TextWriter *writer = nullptr;
+        // if (!writer) {
+        //     writer = sead_TextWriter__ct_test(writer, 0x104141f4);
+        //     WHBLogPrintf("splatoon_test_patches:    Created TextWriter.");
+        // } else {
+        //     sead_TextWriter_printf(writer, "Hello World!");
+        // }
+
+        static sead::TextWriter writer = { 0 };
+        auto test_res = sead_TextWriter__ct_test(&writer, 0x104141f4);
+        WHBLogPrintf("test_res = %p", test_res);
+        // WHBLogPrintf("&test_res = %p", &test_res);
+        // WHBLogPrintf("*test_res = %p", *test_res);
+        WHBLogPrintf("&writer = %p", &writer);
+        // WHBLogPrintf("writer = %p", writer);
+        if (test_res) {
+            WHBLogPrintf("splatoon_test_patches:    Writing to TextWriter...");
+            sead_TextWriter_printf(test_res, "Hello World!");
+        }
+
+        // WHBLogPrintf("splatoon_test_patches:    writer = %p", writer);
+        
+        // sead_TextWriter_printf(writer, "Did you just use a nullptr as the this pointer?");
     }
 
     void ApplyPatches()
@@ -139,13 +192,20 @@ namespace Splatoon
         UTL::WriteCode(func + 0x144, 0x3d600000 | ((((uintptr_t)&MyTestFunc) >> 16) & 0x0000FFFF));
         UTL::WriteCode(func + 0x148, 0x616b0000 | (((uintptr_t)&MyTestFunc) & 0x0000ffff));
         UTL::WriteCode(func + 0x14c, 0x7d6903a6);
-        // UTL::WriteCode(func + 0x150, 0x4e800420); // bctr
         UTL::WriteCode(func + 0x150, 0x4e800421); // bctrl
+        // UTL::WriteCode(func + 0x150, 0x4e800420); // bctr
 
         // Jump forward a bit to skip the built in debug draw code. (Jump to func + 0x1AC)
         UTL::WriteCode(func + 0x154, UTL::inst::Branch(0x1AC - 0x154)); // b 0x88
 
+        
         drawBoundBoxImm = (void (*)(sead::BoundBox3<float> const &box, sead::Color4f const &color, float a3))(base + 0xA11158);
         beginDrawImm = (void (*)(sead::Matrix34<float> const& mtx34, sead::Matrix44<float> const& mtx44, int a3))(base + 0xA0ED08);
+
+
+        sead_TextWriter__ct = (sead::TextWriter * (*)(sead::TextWriter * _this))(base + 0x8CC3B4);
+        sead_TextWriter_printf = (void (*)(sead::TextWriter * _this, const char * format, ...))(base + 0x8CC420);
+
+        sead_TextWriter__ct_test = (sead::TextWriter * (*)(sead::TextWriter * _this, int))(base + 0x8CC3B4);
     }
 }
