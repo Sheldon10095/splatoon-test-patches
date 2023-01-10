@@ -26,12 +26,25 @@ namespace sead
         Vector3<T> min;
         Vector3<T> max;
     };
+
+    template <typename T>
+    struct Matrix34
+    {
+        T m[3][4];
+    };
+
+    template <typename T>
+    struct Matrix44
+    {
+        T m[4][4];
+    };
 }
 
 
 namespace Splatoon
 {
     void (*drawBoundBoxImm)(sead::BoundBox3<float> const& box, sead::Color4f const & color, float a3);
+    void (*beginDrawImm)(sead::Matrix34<float> const& mtx34, sead::Matrix44<float> const& mtx44, int a3); // agl::ShaderType a3); // Maybe???
 
     static sead::BoundBox3<float> box1 = {
         { -0.94f, -0.94f, 0.0f },
@@ -45,6 +58,19 @@ namespace Splatoon
 
     static sead::Color4f color1 = { 1.0f, 1.0f, 1.0f, 1.0f };
     static sead::Color4f color2 = { 1.0f, 0.0f, 0.0f, 1.0f };
+
+    static sead::Matrix34<float> mtx34Ident = {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f
+    };
+
+    static sead::Matrix44<float> mtx44Ident = {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
 
 
     void MyTestFunc()
@@ -63,8 +89,10 @@ namespace Splatoon
         //     i = 60;
         // }
 
-        // drawBoundBoxImm(box1, color1, 1.0f);
-        // drawBoundBoxImm(box2, color2, 1.0f);
+        beginDrawImm(mtx34Ident, mtx44Ident, 4);
+        
+        drawBoundBoxImm(box1, color1, 1.0f);
+        drawBoundBoxImm(box2, color2, 1.0f);
     }
 
     void ApplyPatches()
@@ -111,11 +139,13 @@ namespace Splatoon
         UTL::WriteCode(func + 0x144, 0x3d600000 | ((((uintptr_t)&MyTestFunc) >> 16) & 0x0000FFFF));
         UTL::WriteCode(func + 0x148, 0x616b0000 | (((uintptr_t)&MyTestFunc) & 0x0000ffff));
         UTL::WriteCode(func + 0x14c, 0x7d6903a6);
-        UTL::WriteCode(func + 0x150, 0x4e800420);
+        // UTL::WriteCode(func + 0x150, 0x4e800420); // bctr
+        UTL::WriteCode(func + 0x150, 0x4e800421); // bctrl
 
         // Jump forward a bit to skip the built in debug draw code. (Jump to func + 0x1AC)
         UTL::WriteCode(func + 0x154, UTL::inst::Branch(0x1AC - 0x154)); // b 0x88
 
         drawBoundBoxImm = (void (*)(sead::BoundBox3<float> const &box, sead::Color4f const &color, float a3))(base + 0xA11158);
+        beginDrawImm = (void (*)(sead::Matrix34<float> const& mtx34, sead::Matrix44<float> const& mtx44, int a3))(base + 0xA0ED08);
     }
 }
