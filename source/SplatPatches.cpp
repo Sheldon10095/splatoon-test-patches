@@ -47,8 +47,12 @@ namespace sead
 
 namespace Splatoon
 {
-    void (*drawBoundBoxImm)(sead::BoundBox3<float> const& box, sead::Color4f const & color, float a3);
     void (*beginDrawImm)(sead::Matrix34<float> const& mtx34, sead::Matrix44<float> const& mtx44, int a3); // agl::ShaderType a3); // Maybe???
+    void (*drawBoundBoxImm)(sead::BoundBox3<float> const& box, sead::Color4f const & color, float a3);
+
+    void (*drawPointImm)(sead::Vector3<float> const& pos, sead::Color4f const & color, float a3);
+
+
 
     sead::TextWriter *(*sead_TextWriter__ct)(sead::TextWriter *_this);
     sead::TextWriter *(*sead_TextWriter__ct_test)(sead::TextWriter *_this, int a2);
@@ -81,6 +85,10 @@ namespace Splatoon
     };
 
 
+    static uintptr_t textAddr = 0;
+    static uintptr_t dataAddr = 0;
+
+
     void MyTestFunc()
     {
         static bool first = true;
@@ -100,7 +108,10 @@ namespace Splatoon
         beginDrawImm(mtx34Ident, mtx44Ident, 4);
 
         drawBoundBoxImm(box1, color1, 1.0f);
-        drawBoundBoxImm(box2, color2, 1.0f);
+        // drawBoundBoxImm(box2, color2, 1.0f);
+        drawBoundBoxImm(box2, color2, 15.0f);
+
+        drawPointImm({ 0.0f, 0.0f, 0.0f }, color2, 30.0f);
 
         // static sead::TextWriter *writer = nullptr;
         // if (!writer) {
@@ -131,17 +142,44 @@ namespace Splatoon
         //     sead_TextWriter_printf(writer, "Hello World!");
         // }
 
-        static sead::TextWriter writer = { 0 };
-        auto test_res = sead_TextWriter__ct_test(&writer, 0x104141f4);
-        WHBLogPrintf("test_res = %p", test_res);
-        // WHBLogPrintf("&test_res = %p", &test_res);
-        // WHBLogPrintf("*test_res = %p", *test_res);
-        WHBLogPrintf("&writer = %p", &writer);
-        // WHBLogPrintf("writer = %p", writer);
-        if (test_res) {
-            WHBLogPrintf("splatoon_test_patches:    Writing to TextWriter...");
-            sead_TextWriter_printf(test_res, "Hello World!");
-        }
+        // static sead::TextWriter writer = { 0 };
+        // auto test_res = sead_TextWriter__ct_test(&writer, 0x104141f4);
+        // WHBLogPrintf("test_res = %p", test_res);
+        // // WHBLogPrintf("&test_res = %p", &test_res);
+        // // WHBLogPrintf("*test_res = %p", *test_res);
+        // WHBLogPrintf("&writer = %p", &writer);
+        // // WHBLogPrintf("writer = %p", writer);
+        // if (test_res) {
+        //     WHBLogPrintf("splatoon_test_patches:    Writing to TextWriter...");
+        //     sead_TextWriter_printf(test_res, "Hello World!");
+        // }
+
+        // static sead::TextWriter writer = { 0 };
+        // // int a2 = 0x104141f4 + 0x503000;
+        // int a2 = dataAddr + 0x4141f4;
+        // // int a2 = dataAddr + 0x41421c;
+        
+        // WHBLogPrintf("Before Constructing TextWriter:");
+        // WHBLogPrintf("%08x %08x %08x %08x", writer._0[0], writer._0[1], writer._0[2], writer._0[3]);
+        // WHBLogPrintf("%08x %08x %08x %08x", writer._0[4], writer._0[5], writer._0[6], writer._0[7]);
+        // WHBLogPrintf("%08x %08x %08x %08x", writer._0[8], writer._0[9], writer._0[10], writer._0[11]);
+        // WHBLogPrintf("%08x %08x %08x %08x", writer._0[12], writer._0[13], writer._0[14], writer._0[15]);
+        // WHBLogPrintf("%08x %08x %08x %08x", writer._0[16], writer._0[17], writer._0[18], writer._0[19]);
+
+        // auto test_res = sead_TextWriter__ct_test(&writer, a2);
+
+        // WHBLogPrintf("After Constructing TextWriter:");
+        // WHBLogPrintf("%08x %08x %08x %08x", writer._0[0], writer._0[1], writer._0[2], writer._0[3]);
+        // WHBLogPrintf("%08x %08x %08x %08x", writer._0[4], writer._0[5], writer._0[6], writer._0[7]);
+        // WHBLogPrintf("%08x %08x %08x %08x", writer._0[8], writer._0[9], writer._0[10], writer._0[11]);
+        // WHBLogPrintf("%08x %08x %08x %08x", writer._0[12], writer._0[13], writer._0[14], writer._0[15]);
+        // WHBLogPrintf("%08x %08x %08x %08x", writer._0[16], writer._0[17], writer._0[18], writer._0[19]);
+
+        // if (test_res) {
+        //     WHBLogPrintf("splatoon_test_patches:    Writing to TextWriter...");
+        //     sead_TextWriter_printf(test_res, "Hello World!");
+        // }
+
 
         // WHBLogPrintf("splatoon_test_patches:    writer = %p", writer);
         
@@ -172,6 +210,13 @@ namespace Splatoon
         // uintptr_t patch1 = addr_func_gsys__SystemTask__invokeDrawTV_ + 0x144; // 0x02AD72A4
         // PatchInstruction((uintptr_t *)patch1, 0x41820068, 0x60000000);        // beq + 0x68 -> nop
 
+        WHBLogPrintf("Gambit.rpx->textAddr: %08x", gambit_rpx->textAddr);
+        WHBLogPrintf("Gambit.rpx->dataAddr: %08x", gambit_rpx->dataAddr);
+        WHBLogPrintf("Gambit.rpx->readAddr: %08x", gambit_rpx->readAddr);
+
+        dataAddr = gambit_rpx->dataAddr;
+        textAddr = gambit_rpx->textAddr;
+
         uintptr_t base = gambit_rpx->textAddr;
         uintptr_t func = base + 0xAD7160; /* gsys::SystemTask::invokeDrawTV_ */
         // UTL::WriteCode(func + 0x144, UTL::inst::Nop); // .text:02AD72A4         nop
@@ -199,8 +244,13 @@ namespace Splatoon
         UTL::WriteCode(func + 0x154, UTL::inst::Branch(0x1AC - 0x154)); // b 0x88
 
         
+
         drawBoundBoxImm = (void (*)(sead::BoundBox3<float> const &box, sead::Color4f const &color, float a3))(base + 0xA11158);
         beginDrawImm = (void (*)(sead::Matrix34<float> const& mtx34, sead::Matrix44<float> const& mtx44, int a3))(base + 0xA0ED08);
+
+        drawPointImm = (void (*)(sead::Vector3<float> const& pos, sead::Color4f const& color, float a3))(base + 0xA1100C);
+
+
 
 
         sead_TextWriter__ct = (sead::TextWriter * (*)(sead::TextWriter * _this))(base + 0x8CC3B4);
