@@ -12,6 +12,13 @@ namespace sead
     };
 
     template <typename T>
+    struct Vector2
+    {
+        T x;
+        T y;
+    };
+
+    template <typename T>
     struct Vector3
     {
         T x;
@@ -40,7 +47,29 @@ namespace sead
 
     struct TextWriter
     {
-        u8 _0[80];
+        // u8 _0[80];
+        u32 dword0;
+        u32 dword4;
+        u32 dword8;
+        u32 dwordC;
+        Vector2<float> mVector10;
+        Vector2<float> mVector18;
+        Color4f mColor;
+        float unk30;
+        float float34;
+        u32 dword38;
+        float float3C;
+        u32 dword40;
+        u32 dword44;
+        u8 byte48;
+        u32 dword4C; // vtable
+    };
+    static_assert(sizeof(TextWriter) == 80, "TextWriter size is wrong");
+
+    struct Viewport
+    {
+        // u8 _0[24];
+        u32 _0[24 / sizeof(u32)];
     };
 }
 
@@ -55,7 +84,7 @@ namespace Splatoon
 
 
     sead::TextWriter *(*sead_TextWriter__ct)(sead::TextWriter *_this);
-    sead::TextWriter *(*sead_TextWriter__ct_test)(sead::TextWriter *_this, int a2);
+    sead::TextWriter *(*sead_TextWriter__ct_test)(sead::TextWriter *_this, sead::Viewport const *); // int a2);
     void (*sead_TextWriter_printf)(sead::TextWriter *_this, const char *fmt, ...);
 
     static sead::BoundBox3<float> box1 = {
@@ -89,7 +118,8 @@ namespace Splatoon
     static uintptr_t dataAddr = 0;
 
 
-    void MyTestFunc()
+    // void MyTestFunc()
+    void MyTestFunc(sead::Viewport const* pViewport)
     {
         static bool first = true;
         if (first) {
@@ -109,9 +139,42 @@ namespace Splatoon
 
         drawBoundBoxImm(box1, color1, 1.0f);
         // drawBoundBoxImm(box2, color2, 1.0f);
-        drawBoundBoxImm(box2, color2, 15.0f);
+        // drawBoundBoxImm(box2, color2, 15.0f);
 
-        drawPointImm({ 0.0f, 0.0f, 0.0f }, color2, 30.0f);
+        // drawPointImm({ 0.0f, 0.0f, 0.0f }, color2, 30.0f);
+
+        // WHBLogPrintf("Attempting to construct TextWriter... (pViewport = %p)", pViewport);
+        static sead::TextWriter writer = { 0 };
+        auto test = sead_TextWriter__ct_test(&writer, pViewport);
+
+        // sead_TextWriter_printf(test, "TEST MESSAGE 1");
+        // test->_0[0x48] = 0x0;
+        // sead_TextWriter_printf(test, "TEST MESSAGE 2");
+        // test->_0[0x48] = 0x1;
+        // sead_TextWriter_printf(test, "TEST MESSAGE 3");
+        // test->_0[0x48] = 0x0;
+        // sead_TextWriter_printf(test, "TEST MESSAGE 4");
+
+        sead_TextWriter_printf(&writer, "TEST MESSAGE 1");
+
+        writer.mVector18.y = 1.8f;
+        writer.mVector18.x = 1.8f;
+        // writer.mVector10.y = 0.1f;
+        // writer.mVector10.x = 0.1f;
+        writer.mVector10.x = -160.0f;
+        writer.mVector10.y = -300.0f;
+        writer.mColor = color1;
+
+        sead_TextWriter_printf(&writer, "TEST MESSAGE 2");
+
+
+        if (test) {
+            // WHBLogPrintf("TextWriter constructed successfully! (maybe???)");
+            sead_TextWriter_printf(test, "Hello World!");
+            // WHBLogPrintf("TextWriter printed successfully!");
+        } else {
+            // WHBLogPrintf("TextWriter construction failed!");
+        }
 
         // static sead::TextWriter *writer = nullptr;
         // if (!writer) {
@@ -234,15 +297,22 @@ namespace Splatoon
         // WHBLogPrintf("SPT: [DEBUG] %08x", ((uintptr_t)&MyTestFunc) - (func + 0x144));
         // WHBLogPrintf("SPT: [DEBUG] ^ as PPC Hex Inst: %08x", UTL::inst::BranchLink(((uintptr_t)&MyTestFunc) - (func + 0x144)));
 
-        UTL::WriteCode(func + 0x144, 0x3d600000 | ((((uintptr_t)&MyTestFunc) >> 16) & 0x0000FFFF));
-        UTL::WriteCode(func + 0x148, 0x616b0000 | (((uintptr_t)&MyTestFunc) & 0x0000ffff));
-        UTL::WriteCode(func + 0x14c, 0x7d6903a6);
-        UTL::WriteCode(func + 0x150, 0x4e800421); // bctrl
-        // UTL::WriteCode(func + 0x150, 0x4e800420); // bctr
+        // UTL::WriteCode(func + 0x144, 0x3d600000 | ((((uintptr_t)&MyTestFunc) >> 16) & 0x0000FFFF)); // lis r11, MyTestFunc@ha
+        // UTL::WriteCode(func + 0x148, 0x616b0000 | (((uintptr_t)&MyTestFunc) & 0x0000FFFF));         // ori r11, r11, MyTestFunc@l
+        // UTL::WriteCode(func + 0x14c, 0x7d6903a6); // mtspr, ctr, r11
+        // UTL::WriteCode(func + 0x150, 0x4e800421); // bctrl
+        // // Jump forward a bit to skip the built in debug draw code. (Jump to func + 0x1AC)
+        // UTL::WriteCode(func + 0x154, UTL::inst::Branch(0x1AC - 0x154)); // b 0x58
 
+        
+        // Slight revision to above code
+        UTL::WriteCode(func + 0x144, 0x38610030);                                                   // addi r3, r1, 0x30
+        UTL::WriteCode(func + 0x148, 0x3d600000 | ((((uintptr_t)&MyTestFunc) >> 16) & 0x0000FFFF)); // lis r11, MyTestFunc@ha
+        UTL::WriteCode(func + 0x14C, 0x616b0000 | (((uintptr_t)&MyTestFunc) & 0x0000FFFF));         // ori r11, r11, MyTestFunc@l
+        UTL::WriteCode(func + 0x150, 0x7d6903a6);                                                   // mtspr, ctr, r11
+        UTL::WriteCode(func + 0x154, 0x4e800421);                                                   // bctrl
         // Jump forward a bit to skip the built in debug draw code. (Jump to func + 0x1AC)
-        UTL::WriteCode(func + 0x154, UTL::inst::Branch(0x1AC - 0x154)); // b 0x88
-
+        UTL::WriteCode(func + 0x158, UTL::inst::Branch(0x1AC - 0x158)); // b 0x54
         
 
         drawBoundBoxImm = (void (*)(sead::BoundBox3<float> const &box, sead::Color4f const &color, float a3))(base + 0xA11158);
@@ -256,6 +326,7 @@ namespace Splatoon
         sead_TextWriter__ct = (sead::TextWriter * (*)(sead::TextWriter * _this))(base + 0x8CC3B4);
         sead_TextWriter_printf = (void (*)(sead::TextWriter * _this, const char * format, ...))(base + 0x8CC420);
 
-        sead_TextWriter__ct_test = (sead::TextWriter * (*)(sead::TextWriter * _this, int))(base + 0x8CC3B4);
+        // sead_TextWriter__ct_test = (sead::TextWriter * (*)(sead::TextWriter * _this, int))(base + 0x8CC3B4);
+        sead_TextWriter__ct_test = (sead::TextWriter * (*)(sead::TextWriter * _this, sead::Viewport const *))(base + 0x8CC3B4);
     }
 }
