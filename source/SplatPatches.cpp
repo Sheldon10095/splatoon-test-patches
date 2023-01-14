@@ -330,6 +330,8 @@ namespace Splatoon
         UTL::WriteCode(func2 + 0x68, 0x616b0000 | (((uintptr_t)&MyTestFunc2) & 0x0000FFFF));         // ori r11, r11, MyTestFunc2@l
         UTL::WriteCode(func2 + 0x6c, 0x7d6903a6);                                                    // mtspr, ctr, r11
         UTL::WriteCode(func2 + 0x70, 0x4e800421);                                                    // bctrl
+        // Jump to end of function for cleanup
+        UTL::WriteCode(func2 + 0x74, UTL::inst::Branch(0x280 - 0x74)); // b 0x20C
 
 
 
