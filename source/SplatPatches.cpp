@@ -121,30 +121,30 @@ namespace Splatoon
     // void MyTestFunc()
     void MyTestFunc(sead::Viewport const* pViewport)
     {
-        static bool first = true;
-        if (first) {
-            WHBLogPrintf("splatoon_test_patches: MyTestFunc() called! First time.");
-            first = false;
-        }
-
-        // static int i = 60;
-        // if (i > 0) {
-        //     i--;
-        // } else {
-        //     WHBLogPrintf("splatoon_test_patches: MyTestFunc() called! Heartbeat Message. (Expected every 60 frames)");
-        //     i = 60;
+        // static bool first = true;
+        // if (first) {
+        //     WHBLogPrintf("splatoon_test_patches: MyTestFunc() called! First time.");
+        //     first = false;
         // }
 
-        beginDrawImm(mtx34Ident, mtx44Ident, 4);
+        // // static int i = 60;
+        // // if (i > 0) {
+        // //     i--;
+        // // } else {
+        // //     WHBLogPrintf("splatoon_test_patches: MyTestFunc() called! Heartbeat Message. (Expected every 60 frames)");
+        // //     i = 60;
+        // // }
 
-        drawBoundBoxImm(box1, color1, 1.0f);
-        // drawBoundBoxImm(box2, color2, 1.0f);
-        // drawBoundBoxImm(box2, color2, 15.0f);
+        // beginDrawImm(mtx34Ident, mtx44Ident, 4);
 
-        // drawPointImm({ 0.0f, 0.0f, 0.0f }, color2, 30.0f);
+        // drawBoundBoxImm(box1, color1, 1.0f);
+        // // drawBoundBoxImm(box2, color2, 1.0f);
+        // // drawBoundBoxImm(box2, color2, 15.0f);
 
-        // WHBLogPrintf("Attempting to construct TextWriter... (pViewport = %p)", pViewport);
-        static sead::TextWriter writer = { 0 };
+        // // drawPointImm({ 0.0f, 0.0f, 0.0f }, color2, 30.0f);
+
+        // // WHBLogPrintf("Attempting to construct TextWriter... (pViewport = %p)", pViewport);
+        sead::TextWriter writer = { 0 };
         auto test = sead_TextWriter__ct_test(&writer, pViewport);
 
         // sead_TextWriter_printf(test, "TEST MESSAGE 1");
@@ -249,6 +249,13 @@ namespace Splatoon
         // sead_TextWriter_printf(writer, "Did you just use a nullptr as the this pointer?");
     }
 
+    void MyTestFunc2(sead::TextWriter *writer)
+    {
+        WHBLogPrintf("splatoon_test_patches:    Writing to TextWriter...");
+        sead_TextWriter_printf(writer, "Hello World!");
+    }
+
+
     void ApplyPatches()
     {
         auto gambit_rpx = FindRPL(*gRPLInfo, "Gambit.rpx");
@@ -314,6 +321,17 @@ namespace Splatoon
         // Jump forward a bit to skip the built in debug draw code. (Jump to func + 0x1AC)
         UTL::WriteCode(func + 0x158, UTL::inst::Branch(0x1AC - 0x158)); // b 0x54
         
+
+
+        // Different branch location test
+        uintptr_t func2 = base + 0x89DD24;
+        UTL::WriteCode(func2 + 0x4c, UTL::inst::Nop);
+        UTL::WriteCode(func2 + 0x64, 0x3d600000 | ((((uintptr_t)&MyTestFunc2) >> 16) & 0x0000FFFF)); // lis r11, MyTestFunc2@ha
+        UTL::WriteCode(func2 + 0x68, 0x616b0000 | (((uintptr_t)&MyTestFunc2) & 0x0000FFFF));         // ori r11, r11, MyTestFunc2@l
+        UTL::WriteCode(func2 + 0x6c, 0x7d6903a6);                                                    // mtspr, ctr, r11
+        UTL::WriteCode(func2 + 0x70, 0x4e800421);                                                    // bctrl
+
+
 
         drawBoundBoxImm = (void (*)(sead::BoundBox3<float> const &box, sead::Color4f const &color, float a3))(base + 0xA11158);
         beginDrawImm = (void (*)(sead::Matrix34<float> const& mtx34, sead::Matrix44<float> const& mtx44, int a3))(base + 0xA0ED08);
