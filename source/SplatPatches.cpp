@@ -52,8 +52,8 @@ namespace sead
         u32 dword4;
         u32 dword8;
         u32 dwordC;
-        Vector2<float> mVector10;
-        Vector2<float> mVector18;
+        Vector2<float> mPos;
+        Vector2<float> mScale;
         Color4f mColor;
         float unk30;
         float float34;
@@ -135,46 +135,46 @@ namespace Splatoon
         // //     i = 60;
         // // }
 
-        // beginDrawImm(mtx34Ident, mtx44Ident, 4);
+        beginDrawImm(mtx34Ident, mtx44Ident, 4);
 
-        // drawBoundBoxImm(box1, color1, 1.0f);
-        // // drawBoundBoxImm(box2, color2, 1.0f);
+        drawBoundBoxImm(box1, color1, 1.0f);
+        // drawBoundBoxImm(box2, color2, 1.0f);
         // // drawBoundBoxImm(box2, color2, 15.0f);
 
         // // drawPointImm({ 0.0f, 0.0f, 0.0f }, color2, 30.0f);
 
-        // // WHBLogPrintf("Attempting to construct TextWriter... (pViewport = %p)", pViewport);
-        sead::TextWriter writer = { 0 };
-        auto test = sead_TextWriter__ct_test(&writer, pViewport);
+        // // // WHBLogPrintf("Attempting to construct TextWriter... (pViewport = %p)", pViewport);
+        // sead::TextWriter writer = { 0 };
+        // auto test = sead_TextWriter__ct_test(&writer, pViewport);
 
-        // sead_TextWriter_printf(test, "TEST MESSAGE 1");
-        // test->_0[0x48] = 0x0;
-        // sead_TextWriter_printf(test, "TEST MESSAGE 2");
-        // test->_0[0x48] = 0x1;
-        // sead_TextWriter_printf(test, "TEST MESSAGE 3");
-        // test->_0[0x48] = 0x0;
-        // sead_TextWriter_printf(test, "TEST MESSAGE 4");
+        // // sead_TextWriter_printf(test, "TEST MESSAGE 1");
+        // // test->_0[0x48] = 0x0;
+        // // sead_TextWriter_printf(test, "TEST MESSAGE 2");
+        // // test->_0[0x48] = 0x1;
+        // // sead_TextWriter_printf(test, "TEST MESSAGE 3");
+        // // test->_0[0x48] = 0x0;
+        // // sead_TextWriter_printf(test, "TEST MESSAGE 4");
 
-        sead_TextWriter_printf(&writer, "TEST MESSAGE 1");
+        // sead_TextWriter_printf(&writer, "TEST MESSAGE 1");
 
-        writer.mVector18.y = 1.8f;
-        writer.mVector18.x = 1.8f;
-        // writer.mVector10.y = 0.1f;
-        // writer.mVector10.x = 0.1f;
-        writer.mVector10.x = -160.0f;
-        writer.mVector10.y = -300.0f;
-        writer.mColor = color1;
+        // writer.mVector18.y = 1.8f;
+        // writer.mVector18.x = 1.8f;
+        // // writer.mVector10.y = 0.1f;
+        // // writer.mVector10.x = 0.1f;
+        // writer.mVector10.x = -160.0f;
+        // writer.mVector10.y = -300.0f;
+        // writer.mColor = color1;
 
-        sead_TextWriter_printf(&writer, "TEST MESSAGE 2");
+        // sead_TextWriter_printf(&writer, "TEST MESSAGE 2");
 
 
-        if (test) {
-            // WHBLogPrintf("TextWriter constructed successfully! (maybe???)");
-            sead_TextWriter_printf(test, "Hello World!");
-            // WHBLogPrintf("TextWriter printed successfully!");
-        } else {
-            // WHBLogPrintf("TextWriter construction failed!");
-        }
+        // if (test) {
+        //     // WHBLogPrintf("TextWriter constructed successfully! (maybe???)");
+        //     sead_TextWriter_printf(test, "Hello World!");
+        //     // WHBLogPrintf("TextWriter printed successfully!");
+        // } else {
+        //     // WHBLogPrintf("TextWriter construction failed!");
+        // }
 
         // static sead::TextWriter *writer = nullptr;
         // if (!writer) {
@@ -251,8 +251,24 @@ namespace Splatoon
 
     void MyTestFunc2(sead::TextWriter *writer)
     {
-        WHBLogPrintf("splatoon_test_patches:    Writing to TextWriter...");
-        sead_TextWriter_printf(writer, "Hello World!");
+        // WHBLogPrintf("splatoon_test_patches:    Writing to TextWriter...");
+        sead_TextWriter_printf(writer, "Hello World!\n");
+        sead_TextWriter_printf(writer, "writer.mPos.x = %f\n", writer->mPos.x);
+        sead_TextWriter_printf(writer, "writer.mPos.y = %f\n", writer->mPos.y);
+        sead_TextWriter_printf(writer, "writer.mScale.x = %f\n", writer->mScale.x);
+        sead_TextWriter_printf(writer, "writer.mScale.y = %f\n", writer->mScale.y);
+
+        writer->mScale.x = 3.0f;
+        writer->mScale.y = 3.0f;
+
+        sead_TextWriter_printf(writer, "LARGE TEXT\n");
+
+        writer->mPos.x = -160.0f;
+        writer->mPos.y = -300.0f;
+        writer->mScale.x = 1.8f;
+        writer->mScale.y = 1.8f;
+
+        sead_TextWriter_printf(writer, "Made by Sheldon\n");
     }
 
 
@@ -324,7 +340,7 @@ namespace Splatoon
 
 
         // Different branch location test
-        uintptr_t func2 = base + 0x89DD24;
+        uintptr_t func2 = base + 0x89dcd8;
         UTL::WriteCode(func2 + 0x4c, UTL::inst::Nop);
         UTL::WriteCode(func2 + 0x64, 0x3d600000 | ((((uintptr_t)&MyTestFunc2) >> 16) & 0x0000FFFF)); // lis r11, MyTestFunc2@ha
         UTL::WriteCode(func2 + 0x68, 0x616b0000 | (((uintptr_t)&MyTestFunc2) & 0x0000FFFF));         // ori r11, r11, MyTestFunc2@l
