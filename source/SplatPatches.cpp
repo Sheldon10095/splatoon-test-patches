@@ -163,16 +163,22 @@ namespace Splatoon
 
     void MyTestFunc2(sead::TextWriter *writer)
     {
+        static bool first = true;
+        if (first) {
+            WHBLogPrintf("splatoon_test_patches: MyTestFunc2() called! First time.");
+            first = false;
+        }
+
         // WHBLogPrintf("splatoon_test_patches:    Writing to TextWriter...");
         sead_TextWriter_printf(writer, "Hello World!\n");
-        sead_TextWriter_printf(writer, "writer.mPos.x = %f\n", writer->mPos.x);
-        sead_TextWriter_printf(writer, "writer.mPos.y = %f\n", writer->mPos.y);
-        sead_TextWriter_printf(writer, "writer.mScale.x = %f\n", writer->mScale.x);
-        sead_TextWriter_printf(writer, "writer.mScale.y = %f\n", writer->mScale.y);
+        // sead_TextWriter_printf(writer, "writer.mPos.x = %f\n", writer->mPos.x);
+        // sead_TextWriter_printf(writer, "writer.mPos.y = %f\n", writer->mPos.y);
+        // sead_TextWriter_printf(writer, "writer.mScale.x = %f\n", writer->mScale.x);
+        // sead_TextWriter_printf(writer, "writer.mScale.y = %f\n", writer->mScale.y);
 
-        writer->mScale.x = 3.0f;
-        writer->mScale.y = 3.0f;
-        sead_TextWriter_printf(writer, "LARGE TEXT\n");
+        // writer->mScale.x = 3.0f;
+        // writer->mScale.y = 3.0f;
+        // sead_TextWriter_printf(writer, "LARGE TEXT\n");
 
         writer->mPos.x = -160.0f;
         writer->mPos.y = -300.0f;
@@ -205,7 +211,7 @@ namespace Splatoon
 
         WHBLogPrintf("Gambit.rpx->textAddr: %08x", gambit_rpx->textAddr);
         WHBLogPrintf("Gambit.rpx->dataAddr: %08x", gambit_rpx->dataAddr);
-        WHBLogPrintf("Gambit.rpx->readAddr: %08x", gambit_rpx->readAddr);
+        // WHBLogPrintf("Gambit.rpx->readAddr: %08x", gambit_rpx->readAddr);
 
         dataAddr = gambit_rpx->dataAddr;
         textAddr = gambit_rpx->textAddr;
@@ -214,19 +220,6 @@ namespace Splatoon
         uintptr_t func = base + 0xAD7160; /* gsys::SystemTask::invokeDrawTV_ */
         uintptr_t func2 = base + 0x89dcd8;
 
-        crm::WriteCode(func + 0x144, crm::inst::AddImmediate(crm::Register::r3, crm::Register::r1, 0x30));
-        crm::WriteCode(func + 0x148, crm::inst::LoadImmediateShifted(crm::Register::r11, HIWORD((uintptr_t)&MyTestFunc)));
-        crm::WriteCode(func + 0x14C, crm::inst::OrImmediate(crm::Register::r11, crm::Register::r11, LOWORD((uintptr_t)&MyTestFunc)));
-        crm::WriteCode(func + 0x150, crm::inst::MoveToCountRegister(crm::Register::r11));
-        crm::WriteCode(func + 0x154, crm::inst::BranchCountLink());
-        crm::WriteCode(func + 0x158, crm::inst::Branch(0x1AC - 0x158));
-
-        crm::WriteCode(func2 + 0x4c, crm::inst::NoOperation());
-        crm::WriteCode(func2 + 0x64, crm::inst::LoadImmediateShifted(crm::Register::r11, HIWORD((uintptr_t)&MyTestFunc2)));
-        crm::WriteCode(func2 + 0x68, crm::inst::OrImmediate(crm::Register::r11, crm::Register::r11, LOWORD((uintptr_t)&MyTestFunc2)));
-        crm::WriteCode(func2 + 0x6c, crm::inst::MoveToCountRegister(crm::Register::r11));
-        crm::WriteCode(func2 + 0x70, crm::inst::BranchCountLink());
-        crm::WriteCode(func2 + 0x74, crm::inst::Branch(0x280 - 0x74));
 
         /// OLD CODE
         // UTL::WriteCode(func + 0x144, 0x3d600000 | ((((uintptr_t)&MyTestFunc) >> 16) & 0x0000FFFF)); // lis r11, MyTestFunc@ha
@@ -256,6 +249,28 @@ namespace Splatoon
         // UTL::WriteCode(func2 + 0x74, UTL::inst::Branch(0x280 - 0x74)); // b 0x20C
         /// END OLD CODE
 
+        crm::WriteCode(func + 0x144, crm::inst::AddImmediate(crm::Register::r3, crm::Register::r1, 0x30));
+        crm::WriteCode(func + 0x148, crm::inst::LoadImmediateShifted(crm::Register::r11, HIWORD((uintptr_t)&MyTestFunc)));
+        crm::WriteCode(func + 0x14C, crm::inst::OrImmediate(crm::Register::r11, crm::Register::r11, LOWORD((uintptr_t)&MyTestFunc)));
+        crm::WriteCode(func + 0x150, crm::inst::MoveToCountRegister(crm::Register::r11));
+        crm::WriteCode(func + 0x154, crm::inst::BranchCountLink());
+        crm::WriteCode(func + 0x158, crm::inst::Branch(0x1AC - 0x158));
+
+        // crm::WriteCode(func2 + 0x4c, crm::inst::NoOperation());
+        // crm::WriteCode(func2 + 0x64, crm::inst::LoadImmediateShifted(crm::Register::r11, HIWORD((uintptr_t)&MyTestFunc2)));
+        // crm::WriteCode(func2 + 0x68, crm::inst::OrImmediate(crm::Register::r11, crm::Register::r11, LOWORD((uintptr_t)&MyTestFunc2)));
+        // crm::WriteCode(func2 + 0x6c, crm::inst::MoveToCountRegister(crm::Register::r11));
+        // crm::WriteCode(func2 + 0x70, crm::inst::BranchCountLink());
+        // crm::WriteCode(func2 + 0x74, crm::inst::Branch(0x280 - 0x74));
+
+        // Temporary test code because something is wrong with the above code -_-
+        // Or the Wii U hates me. One of the two.
+        crm::WriteCode(func2 + 0x4c, crm::inst::Nop);
+        crm::WriteCode(func2 + 0x64, 0x3d600000 | ((((uintptr_t)&MyTestFunc2) >> 16) & 0x0000FFFF)); // lis r11, MyTestFunc2@ha
+        crm::WriteCode(func2 + 0x68, 0x616b0000 | (((uintptr_t)&MyTestFunc2) & 0x0000FFFF));         // ori r11, r11, MyTestFunc2@l
+        crm::WriteCode(func2 + 0x6c, 0x7d6903a6);                                                    // mtspr, ctr, r11
+        crm::WriteCode(func2 + 0x70, 0x4e800421);                                                    // bctrl
+        crm::WriteCode(func2 + 0x74, crm::inst::Branch(0x280 - 0x74)); // b 0x20C
 
         // ~~~~~~~~~~~~~~
          
