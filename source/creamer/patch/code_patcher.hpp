@@ -85,7 +85,7 @@ namespace crm
             u8 opcd : 6;          // Opcode       | 0 - 6
             Register rt : 11 - 6; // ???          | 6 - 11
             u8 ra : 16 - 11;      // ???          | 11 - 16     | Either a Register or 0
-            u16 si : 30 - 16;     // ???          | 16 - 30
+            u16 si : 31 - 16;     // ???          | 16 - 31
 
             // operator u32() const { return *reinterpret_cast<const u32 *>(this); }
             operator u32() const {
