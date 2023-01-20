@@ -1,5 +1,4 @@
 #include "SplatPatches.hpp"
-#include "CodePatchUtils.hpp"
 #include "creamer/patch/code_patcher.hpp"
 
 namespace sead
